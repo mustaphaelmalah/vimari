@@ -27,6 +27,8 @@
       "tabBack": "q",
       "closeTab": "x",
       "openTab": "t",
-      "duplicateTab": "y t"
+      "duplicateTab": "y t",
+	  "navToPrevSitePage": "[ [",
+	  "navToNextSitePage": "] ]"
   }
 }

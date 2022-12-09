@@ -26,7 +26,7 @@ var topWindow = (window.top === window),
 	insertMode = false,
 	shiftKeyToggle = false,
 	hudDuration = 5000,
-    extensionCommunicator = SafariExtensionCommunicator(messageHandler);
+	extensionCommunicator = SafariExtensionCommunicator(messageHandler);
 
 var actionMap = {
 	'hintToggle' : function() {
@@ -38,10 +38,10 @@ var actionMap = {
 		activateLinkHintsMode(true, false); },
 
 	'tabForward':
-        function() { extensionCommunicator.requestTabForward(); },
+		function() { extensionCommunicator.requestTabForward(); },
 
 	'tabBack':
-        function() { extensionCommunicator.requestTabBackward() },
+		function() { extensionCommunicator.requestTabBackward() },
 
 	'scrollDown':
 		function() { customScrollBy(0, settings.scrollSize); },
@@ -68,7 +68,7 @@ var actionMap = {
 		function() { window.open(settings.openTabUrl); },
 
 	'closeTab':
-	    function() { extensionCommunicator.requestCloseTab(); },
+		function() { extensionCommunicator.requestCloseTab(); },
 
 	'duplicateTab':
 		function() { window.open(window.location.href); },
@@ -86,7 +86,13 @@ var actionMap = {
 		function() { customScrollBy(0, -document.body.scrollHeight); },
 
 	'goToFirstInput':
-		function() { goToFirstInput(); }
+		function() { goToFirstInput(); },
+
+	'navToPrevSitePage':
+		function() { navToPrevSitePage(); },
+
+	'navToNextSitePage':
+		function() { navToNextSitePage(); }
 };
 
 // Inspiration and general algorithm taken from sVim.
@@ -97,46 +103,86 @@ function goToFirstInput() {
   var bestInViewInput = null;
 
   inputs.forEach(function(input) {
-    // Skip if hidden or disabled
-    if ((input.offsetParent === null) ||
-        input.disabled ||
-        (input.getAttribute('type') === 'hidden') ||
-        (getComputedStyle(input).visibility === 'hidden') ||
-        (input.getAttribute('display') === 'none')) {
-      return;
-    }
+	// Skip if hidden or disabled
+	if ((input.offsetParent === null) ||
+		input.disabled ||
+		(input.getAttribute('type') === 'hidden') ||
+		(getComputedStyle(input).visibility === 'hidden') ||
+		(input.getAttribute('display') === 'none')) {
+	  return;
+	}
 
-    // Skip things that are not actual inputs
-    if ((input.localName !== 'textarea') &&
-        (input.localName !== 'input') &&
-        (input.getAttribute('contenteditable') !== 'true')) {
-      return;
-    }
+	// Skip things that are not actual inputs
+	if ((input.localName !== 'textarea') &&
+		(input.localName !== 'input') &&
+		(input.getAttribute('contenteditable') !== 'true')) {
+	  return;
+	}
 
-    // Skip non-text inputs
-    if (/button|radio|file|image|checkbox|submit/i.test(input.getAttribute('type'))) {
-      return;
-    }
+	// Skip non-text inputs
+	if (/button|radio|file|image|checkbox|submit/i.test(input.getAttribute('type'))) {
+	  return;
+	}
 
-    var inputRect = input.getClientRects()[0];
-    var isInView = (inputRect.top >= -inputRect.height) &&
-                   (inputRect.top <= window.innerHeight) &&
-                   (inputRect.left >= -inputRect.width) &&
-                   (inputRect.left <= window.innerWidth);
+	var inputRect = input.getClientRects()[0];
+	var isInView = (inputRect.top >= -inputRect.height) &&
+				   (inputRect.top <= window.innerHeight) &&
+				   (inputRect.left >= -inputRect.width) &&
+				   (inputRect.left <= window.innerWidth);
 
-    if (bestInput === null) {
-      bestInput = input;
-    }
+	if (bestInput === null) {
+	  bestInput = input;
+	}
 
-    if (isInView && (bestInViewInput === null)) {
-      bestInViewInput = input;
-    }
+	if (isInView && (bestInViewInput === null)) {
+	  bestInViewInput = input;
+	}
   });
 
   var inputToFocus = bestInViewInput || bestInput;
   if (inputToFocus !== null) {
-    inputToFocus.focus();
+	inputToFocus.focus();
   }
+}
+
+function navToPrevSitePage() {
+	var elements = document.querySelectorAll("a,button");
+	var indicators = [
+		"<",
+		"prev",
+		"previous",
+		"<previous",
+		"back",
+		"<back"
+	];
+
+	for (var i = 0; i < elements.length; i++) {
+		var normalized = elements[i].textContent.toLowerCase().replace(/\ /g).trim();
+		if (indicators.indexOf(normalized) !== -1) {
+			elements[i].click();
+			break;
+		}
+	}
+}
+
+function navToNextSitePage() {
+	var elements = document.querySelectorAll("a,button");
+	var indicators = [
+		">",
+		"next",
+		"next>",
+		"forward",
+		"forward>",
+	];
+
+	
+	for (var i = 0; i < elements.length; i++) {
+		var normalized = elements[i].textContent.toLowerCase().replace(/\ /g).trim();
+		if (indicators.indexOf(normalized) !== -1) {
+			elements[i].click();
+			break;
+		}
+	}
 }
 
 // Meant to be overridden, but still has to be copy/pasted from the original...
@@ -152,17 +198,17 @@ Mousetrap.prototype.stopCallback = function(e, element, combo) {
 		return false;
 	}
 
-    var tagName = element.tagName;
-    var contentIsEditable = (element.contentEditable && element.contentEditable === 'true');
+	var tagName = element.tagName;
+	var contentIsEditable = (element.contentEditable && element.contentEditable === 'true');
 
-    // stop for input, select, and textarea
-    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA' || contentIsEditable;
+	// stop for input, select, and textarea
+	return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA' || contentIsEditable;
 };
 
 // Set up key codes to event handlers
 function bindKeyCodesToActions(settings) {
 	// Only add if topWindow... not iframe
-    Mousetrap.reset();
+	Mousetrap.reset();
 	if (topWindow) {
 		Mousetrap.bind('esc', enterNormalMode);
 		Mousetrap.bind('ctrl+[', enterNormalMode);
@@ -184,13 +230,13 @@ function enterNormalMode() {
 	deactivateLinkHintsMode();
 
 
-    if (insertMode === false) {
-        return // We are already in normal mode.
-    }
+	if (insertMode === false) {
+		return // We are already in normal mode.
+	}
 
 	// Re-enable if in insert mode
 	insertMode = false;
-    HUD.showForDuration('Normal Mode', hudDuration);
+	HUD.showForDuration('Normal Mode', hudDuration);
 
 	Mousetrap.bind('i', enterInsertMode);
 }
@@ -198,11 +244,11 @@ function enterNormalMode() {
 // Calling it 'insert mode', but it's really just a user-triggered
 // off switch for the actions.
 function enterInsertMode() {
-    if (insertMode === true) {
-        return // We are already in insert mode.
-    }
-    insertMode = true;
-    HUD.showForDuration('Insert Mode', hudDuration);
+	if (insertMode === true) {
+		return // We are already in insert mode.
+	}
+	insertMode = true;
+	HUD.showForDuration('Insert Mode', hudDuration);
 	Mousetrap.unbind('i');
 }
 
@@ -222,83 +268,83 @@ function executeAction(actionName) {
 
 function unbindKeyCodes() {
 	Mousetrap.reset();
-    document.removeEventListener("keydown", stopSitePropagation);
+	document.removeEventListener("keydown", stopSitePropagation);
 }
 
 // Returns all keys bound in the settings.
 function boundKeys() {
-    const splitBinding = s => s.split(/\+| /i)
-    var bindings = Object.values(settings.bindings)
-        // Split multi-key bindings.
-        .flatMap(s => {
-            if (typeof s === "string" || s instanceof String) {
-                return splitBinding(s)
-            } else if (Array.isArray(s)) {
-                return s.flatMap(splitBinding)
-            }
-        })
+	const splitBinding = s => s.split(/\+| /i)
+	var bindings = Object.values(settings.bindings)
+		// Split multi-key bindings.
+		.flatMap(s => {
+			if (typeof s === "string" || s instanceof String) {
+				return splitBinding(s)
+			} else if (Array.isArray(s)) {
+				return s.flatMap(splitBinding)
+			}
+		})
 
-    // Manually add the modifier, i, esc, and ctr+[.
-    bindings.push(settings.modifier)
-    bindings.push("i")
-    bindings.push("Escape")
-    bindings.push("Control")
-    bindings.push("[")
+	// Manually add the modifier, i, esc, and ctr+[.
+	bindings.push(settings.modifier)
+	bindings.push("i")
+	bindings.push("Escape")
+	bindings.push("Control")
+	bindings.push("[")
 
-    // Use a set to remove duplicates.
-    return new Set(bindings)
+	// Use a set to remove duplicates.
+	return new Set(bindings)
 }
 
 // Stops propagation of keyboard events in normal mode. Adding this
 // callback to the document using the useCapture flag allows us to
 // prevent custom key behaviour implemented by the underlying website.
 function stopSitePropagation() {
-    return function (e) {
-        if (insertMode) {
-            // Never stop propagation in insert mode.
-            return
-        }
+	return function (e) {
+		if (insertMode) {
+			// Never stop propagation in insert mode.
+			return
+		}
 
-        if (settings.transparentBindings === true) {
-            if (boundKeys().has(e.key) && !isActiveElementEditable()) {
-                // If we are in normal mode with transparentBindings enabled we
-                // should only stop propagation in an editable element or if the
-                // key is bound to a Vimari action.
-                e.stopPropagation()
-            }
-        } else if (!isActiveElementEditable()) {
-            e.stopPropagation()
-        }
-    }
+		if (settings.transparentBindings === true) {
+			if (boundKeys().has(e.key) && !isActiveElementEditable()) {
+				// If we are in normal mode with transparentBindings enabled we
+				// should only stop propagation in an editable element or if the
+				// key is bound to a Vimari action.
+				e.stopPropagation()
+			}
+		} else if (!isActiveElementEditable()) {
+			e.stopPropagation()
+		}
+	}
 }
 
 // Check whether the current active element is editable.
 function isActiveElementEditable() {
-    const el = document.activeElement;
-    return (el != null && isEditable(el))
+	const el = document.activeElement;
+	return (el != null && isEditable(el))
 }
  
 
 // Adds an optional modifier to the configured key code for the action
 function getKeyCode(actionName) {
-    if (settings === undefined) {
-        return ''
-    }
+	if (settings === undefined) {
+		return ''
+	}
 
 	var keyCode = settings["bindings"][actionName];
-    const addModifier = s => {
-        if (settings.modifier && settings.modifier.length > 0) {
-            return `${settings.modifier}+${s}`
-        } else {
-            return s
-        }
-    }
+	const addModifier = s => {
+		if (settings.modifier && settings.modifier.length > 0) {
+			return `${settings.modifier}+${s}`
+		} else {
+			return s
+		}
+	}
 
-    if (Array.isArray(keyCode)) {
-        return keyCode.map(addModifier)
-    } else {
-        return addModifier(keyCode)
-    }
+	if (Array.isArray(keyCode)) {
+		return keyCode.map(addModifier)
+	} else {
+		return addModifier(keyCode)
+	}
 }
 
 
@@ -339,9 +385,9 @@ function isEmbed(element) { return ["EMBED", "OBJECT"].indexOf(element.tagName) 
 // ==========================
 
 function messageHandler(event){
-    if (event.name == "updateSettingsEvent") {
-        setSettings(event.message);
-    }
+	if (event.name == "updateSettingsEvent") {
+		setSettings(event.message);
+	}
 }
 
 /*
@@ -353,14 +399,14 @@ function setSettings(msg) {
 }
 
 function activateExtension(settings) {
-    if ((typeof settings != "undefined") &&
-        isExcludedUrl(settings.excludedUrls, document.URL)) {
-        return;
-    }
+	if ((typeof settings != "undefined") &&
+		isExcludedUrl(settings.excludedUrls, document.URL)) {
+		return;
+	}
 
-    // Stop keydown propagation
-    document.addEventListener("keydown", stopSitePropagation(), true);
-    bindKeyCodesToActions(settings);
+	// Stop keydown propagation
+	document.addEventListener("keydown", stopSitePropagation(), true);
+	bindKeyCodesToActions(settings);
 }
 
 function isExcludedUrl(storedExcludedUrls, currentUrl) {
@@ -368,18 +414,18 @@ function isExcludedUrl(storedExcludedUrls, currentUrl) {
 		return false;
 	}
 
-    var excludedUrls, regexp, url, formattedUrl, _i, _len;
-    excludedUrls = storedExcludedUrls.split(",");
-    for (_i = 0, _len = excludedUrls.length; _i < _len; _i++) {
-        url = excludedUrls[_i];
-        formattedUrl = stripProtocolAndWww(url);
-        formattedUrl = formattedUrl.toLowerCase().trim();
-        regexp = new RegExp('((.*)?(' + formattedUrl + ')+(.*))');
-        if (currentUrl.toLowerCase().match(regexp)) {
-            return true;
-        }
-    }
-    return false;
+	var excludedUrls, regexp, url, formattedUrl, _i, _len;
+	excludedUrls = storedExcludedUrls.split(",");
+	for (_i = 0, _len = excludedUrls.length; _i < _len; _i++) {
+		url = excludedUrls[_i];
+		formattedUrl = stripProtocolAndWww(url);
+		formattedUrl = formattedUrl.toLowerCase().trim();
+		regexp = new RegExp('((.*)?(' + formattedUrl + ')+(.*))');
+		if (currentUrl.toLowerCase().match(regexp)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 // These formations removes the protocol and www so that
@@ -389,7 +435,7 @@ function stripProtocolAndWww(url) {
   url = url.replace('http://', '');
   url = url.replace('https://', '');
   if (url.startsWith('www.')) {
-      url = url.slice(4);
+	  url = url.slice(4);
   }
 
   return url;
@@ -397,18 +443,19 @@ function stripProtocolAndWww(url) {
 
 // Add event listener
 function inIframe () {
-    try {
-        return window.self !== window.top;
-    }
-    catch (e) {
-        return true;
-    }
+	try {
+		return window.self !== window.top;
+	}
+	catch (e) {
+		return true;
+	}
 }
 
 if(!inIframe()){
-    extensionCommunicator.requestSettingsUpdate()
+	extensionCommunicator.requestSettingsUpdate()
 }
-                                 
+								 
 // Export to make it testable
 window.isExcludedUrl = isExcludedUrl;
 window.stripProtocolAndWww = stripProtocolAndWww;
+
